@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>左右連動型 巨大表ビューワー（パノラマ描画決定版）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>左右連動型 巨大表ビューワー（スマホ・PC両対応決定版）</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: #1a1a1a; overflow: hidden; font-family: sans-serif;
             user-select: none; -webkit-user-select: none;
+            touch-action: none; /* スマホ標準のブラウザ全体のスクロールや拡大を禁止してバグを防ぐ */
         }
         /* 上部固定バー */
         .top-bar {
@@ -85,7 +86,6 @@
     const imgLeft = new Image(); imgLeft.src = 'WEB_stationCol.png';
     const imgRight = new Image(); imgRight.src = 'WEB_times.png';
 
-    // 両方の画像が読み込まれたら描画を開始
     let loadedCount = 0;
     function onImageLoad() {
         loadedCount++;
@@ -97,7 +97,6 @@
     imgLeft.onload = onImageLoad;
     imgRight.onload = onImageLoad;
 
-    // 画面サイズに合わせてキャンバスの大きさを調整する関数
     function resizeCanvases() {
         leftCanvas.width = leftWin.clientWidth;
         leftCanvas.height = leftWin.clientHeight;
@@ -106,46 +105,35 @@
     }
     window.addEventListener('resize', () => { resizeCanvases(); draw(); });
 
-    // 【パノラマ描画処理】見えている一部分だけを切り出して高速描画する
+    // パノラマ描画処理
     function draw() {
         if (loadedCount < 2) return;
 
-        // キャンバスを一旦クリア
         ctxLeft.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
         ctxRight.clearRect(0, 0, rightCanvas.width, rightCanvas.height);
 
-        // 現在の拡大率における画像の全体サイズを計算
         const curWLeft = imgWidthLeft * currentScale;
         const curHLeft = imgHeightLeft * currentScale;
         const curWRight = imgWidthRight * currentScale;
         const curHRight = imgHeightRight * currentScale;
 
-        // 1. 左画面の描画（横スクロールは0で固定、縦だけ同期）
-        ctxLeft.drawImage(imgLeft, 
-            0, 0, imgWidthLeft, imgHeightLeft, 
-            0, scrollY, curWLeft, curHLeft
-        );
+        // 1. 左画面の描画（縦のみ同期）
+        ctxLeft.drawImage(imgLeft, 0, 0, imgWidthLeft, imgHeightLeft, 0, scrollY, curWLeft, curHLeft);
 
-        // 2. 右画面の描画（上下左右のスワイプ位置を反映）
-        ctxRight.drawImage(imgRight, 
-            0, 0, imgWidthRight, imgHeightRight, 
-            scrollX, scrollY, curWRight, curHRight
-        );
+        // 2. 右画面の描画（上下左右のスワイプ位置反映）
+        ctxRight.drawImage(imgRight, 0, 0, imgWidthRight, imgHeightRight, scrollX, scrollY, curWRight, curHRight);
     }
 
-    // 拡大縮小
     function zoomImages(amount) {
         currentScale += amount;
-        if (currentScale < 0.02) currentScale = 0.02; // 最小2%まで縮小可能
+        if (currentScale < 0.02) currentScale = 0.02;
         if (currentScale > 3.0) currentScale = 3.0;
         document.getElementById('zoomPercent').textContent = `${Math.round(currentScale * 100)}%`;
         
-        // スクリプト位置がはみ出さないように再調整して描画
         checkBounds();
         draw();
     }
 
-    // スワイプ可能な限界（壁）を計算して制限する関数
     function checkBounds() {
         const minX = rightWin.clientWidth - (imgWidthRight * currentScale);
         const minY = rightWin.clientHeight - (imgHeightRight * currentScale);
@@ -156,38 +144,57 @@
         if (scrollY < minY) scrollY = minY;
     }
 
-    // --- マウスドラッグ（スワイプ）操作システム ---
+    // --- 【改良】PCとAndroid（スマホ）両対応のスクロール制御システム ---
     let isDown = false;
     let startX, startY;
     let baseLeft, baseTop;
 
-    rightWin.addEventListener('mousedown', (e) => {
+    // 開始イベントをまとめる関数
+    function startScroll(clientX, clientY) {
         isDown = true;
-        startX = e.pageX;
-        startY = e.pageY;
+        startX = clientX;
+        startY = clientY;
         baseLeft = scrollX;
         baseTop = scrollY;
-    });
+    }
 
-    window.addEventListener('mouseup', () => { isDown = false; });
-    rightWin.addEventListener('mouseleave', () => { isDown = false; });
-
-    rightWin.addEventListener('mousemove', (e) => {
+    // 移動イベントをまとめる関数
+    function moveScroll(clientX, clientY) {
         if (!isDown) return;
-        e.preventDefault();
 
-        // 移動量をリアルタイムに計算（1.5倍速）
-        const diffX = (e.pageX - startX) * 1.5;
-        const diffY = (e.pageY - startY) * 1.5;
+        // 移動量を計算（スマホのタッチ感に合わせて1.5倍速）
+        const diffX = (clientX - startX) * 1.5;
+        const diffY = (clientY - startY) * 1.5;
 
         scrollX = baseLeft + diffX;
         scrollY = baseTop + diffY;
 
         checkBounds();
-        draw(); // 動かした瞬間に再描画
+        draw();
+    }
+
+    // ① パソコン用のマウス操作登録
+    rightWin.addEventListener('mousedown', (e) => startScroll(e.pageX, e.pageY));
+    window.addEventListener('mouseup', () => isDown = false);
+    rightWin.addEventListener('mouseleave', () => isDown = false);
+    rightWin.addEventListener('mousemove', (e) => {
+        if (isDown) e.preventDefault();
+        moveScroll(e.pageX, e.pageY);
     });
 
-    // キーボードの「+」「-」ズームも対応
+    // ② 【新設】Android / iPhone 用のタッチ操作登録
+    rightWin.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        startScroll(touch.pageX, touch.pageY);
+    });
+    window.addEventListener('touchend', () => isDown = false);
+    rightWin.addEventListener('touchmove', (e) => {
+        if (isDown) e.preventDefault(); // 画面全体のガタつきスクロールを防止
+        const touch = e.touches[0];
+        moveScroll(touch.pageX, touch.pageY);
+    }, { passive: false }); // Androidのスクロール制限を解除する設定
+
+    // キーボードズーム
     window.addEventListener('keydown', (e) => {
         if (e.key === ';') zoomImages(0.05);
         if (e.key === '-') zoomImages(-0.05);
