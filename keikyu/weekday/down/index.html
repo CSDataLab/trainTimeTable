@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>左右連動型 巨大表ビューワー（初期80%版）</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #1a1a1a; overflow: hidden; font-family: sans-serif;
+            user-select: none; -webkit-user-select: none;
+            touch-action: none;
+        }
+        /* 上部固定バー */
+        .top-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 40px;
+            background-color: #2d2d2d; border-bottom: 2px solid #444;
+            display: flex; align-items: center; justify-content: flex-end;
+            padding: 0 20px; box-sizing: border-box; z-index: 2000;
+        }
+        .zoom-controls { display: flex; gap: 10px; align-items: center; color: #fff; font-size: 13px; }
+        .zoom-btn {
+            background-color: #444; border: 1px solid #666; color: #fff;
+            padding: 2px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        .zoom-btn:hover { background-color: #007acc; }
+
+        /* 2画面コンテナ */
+        .dual-container {
+            display: flex; width: 100%; height: calc(100% - 42px); margin-top: 42px;
+        }
+        .viewer-window {
+            position: relative; height: 100%;
+            box-sizing: border-box; background-color: #121212;
+            overflow: hidden;
+        }
+        /* 左画面：画像サイズ（拡大率）に完全に自動追従させる */
+        .left-window { 
+            width: auto; 
+            flex-shrink: 0; 
+            border-right: 2px solid #444; 
+        }
+        /* 右画面：左画面が使った残りのスペースを自動で全て埋める */
+        .right-window { 
+            flex: 1; 
+            cursor: grab; 
+        }
+        .right-window:active { cursor: grabbing; }
+
+        /* 描画用キャンバスの設定 */
+        canvas { position: absolute; top: 0; left: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- 上部固定バー -->
+    <div class="top-bar">
+        <div class="zoom-controls">
+            <span>左右同一 拡大縮小：</span>
+            <button class="zoom-btn" onclick="zoomImages(-0.05)">－</button>
+            <span id="zoomPercent">70%</span> <!-- 初期表示のテキストを80%に変更 -->
+            <button class="zoom-btn" onclick="zoomImages(0.05)">＋</button>
+        </div>
+    </div>
+
+    <div class="dual-container">
+        <!-- 左画面 -->
+        <div class="viewer-window left-window" id="leftWin">
+            <canvas id="leftCanvas"></canvas>
+        </div>
+        <!-- 右画面 -->
+        <div class="viewer-window right-window" id="rightWin">
+            <canvas id="rightCanvas"></canvas>
+        </div>
+    </div>
+
+<script>
+    // 画像の元サイズ定義
+    const imgWidthLeft = 98, imgHeightLeft = 2492;
+    const imgWidthRight = 29220, imgHeightRight = 2493;
+
+    // 【重要】初期の拡大率を 1.0 (100%) から 0.8 (80%) に変更
+    let currentScale = 0.7; 
+    let scrollX = 0, scrollY = 0; 
+
+    const leftWin = document.getElementById('leftWin');
+    const rightWin = document.getElementById('rightWin');
+    const leftCanvas = document.getElementById('leftCanvas');
+    const rightCanvas = document.getElementById('rightCanvas');
+    const ctxLeft = leftCanvas.getContext('2d');
+    const ctxRight = rightCanvas.getContext('2d');
+
+    // 画像の読み込み
+    const imgLeft = new Image(); imgLeft.src = 'WEB_stationCol.png';
+    const imgRight = new Image(); imgRight.src = 'WEB_times.png';
+
+    let loadedCount = 0;
+    function onImageLoad() {
+        loadedCount++;
+        if (loadedCount === 2) {
+            resizeCanvases();
+            checkBounds(); // 80%縮小に伴いはみ出しがないか初期チェック
+            draw();
+        }
+    }
+    imgLeft.onload = onImageLoad;
+    imgRight.onload = onImageLoad;
+
+    // 左画面の横幅を、拡大率に応じた画像サイズ（98px × 拡大率）にリアルタイム連動させる
+    function resizeCanvases() {
+        leftWin.style.width = `${imgWidthLeft * currentScale}px`;
+
+        leftCanvas.width = leftWin.clientWidth;
+        leftCanvas.height = leftWin.clientHeight;
+        rightCanvas.width = rightWin.clientWidth;
+        rightCanvas.height = rightWin.clientHeight;
+    }
+    window.addEventListener('resize', () => { resizeCanvases(); draw(); });
+
+    // パノラマ描画処理
+    function draw() {
+        if (loadedCount < 2) return;
+
+        ctxLeft.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+        ctxRight.clearRect(0, 0, rightCanvas.width, rightCanvas.height);
+
+        const curWLeft = imgWidthLeft * currentScale;
+        const curHLeft = imgHeightLeft * currentScale;
+        const curWRight = imgWidthRight * currentScale;
+        const curHRight = imgHeightRight * currentScale;
+
+        // 1. 左画面の描画
+        ctxLeft.drawImage(imgLeft, 0, 0, imgWidthLeft, imgHeightLeft, 0, scrollY, curWLeft, curHLeft);
+
+        // 2. 右画面の描画
+        ctxRight.drawImage(imgRight, 0, 0, imgWidthRight, imgHeightRight, scrollX, scrollY, curWRight, curHRight);
+    }
+
+    function zoomImages(amount) {
+        currentScale += amount;
+        if (currentScale < 0.02) currentScale = 0.02;
+        if (currentScale > 3.0) currentScale = 3.0;
+        document.getElementById('zoomPercent').textContent = `${Math.round(currentScale * 100)}%`;
+        
+        resizeCanvases();
+        checkBounds();
+        draw();
+    }
+
+    function checkBounds() {
+        const minX = rightWin.clientWidth - (imgWidthRight * currentScale);
+        const minY = rightWin.clientHeight - (imgHeightRight * currentScale);
+
+        if (scrollX > 0) scrollX = 0;
+        if (scrollX < minX) scrollX = minX;
+        if (scrollY > 0) scrollY = 0;
+        if (scrollY < minY) scrollY = minY;
+    }
+
+    // --- PCとAndroid両対応のスクロール制御システム ---
+    let isDown = false;
+    let startX, startY;
+    let baseLeft, baseTop;
+
+    function startScroll(clientX, clientY) {
+        isDown = true;
+        startX = clientX;
+        startY = clientY;
+        baseLeft = scrollX;
+        baseTop = scrollY;
+    }
+
+    function moveScroll(clientX, clientY) {
+        if (!isDown) return;
+
+        const diffX = (clientX - startX) * 1.5;
+        const diffY = (clientY - startY) * 1.5;
+
+        scrollX = baseLeft + diffX;
+        scrollY = baseTop + diffY;
+
+        checkBounds();
+        draw();
+    }
+
+    // ① パソコン用のマウス操作登録
+    rightWin.addEventListener('mousedown', (e) => startScroll(e.pageX, e.pageY));
+    window.addEventListener('mouseup', () => isDown = false);
+    rightWin.addEventListener('mouseleave', () => isDown = false);
+    rightWin.addEventListener('mousemove', (e) => {
+        if (isDown) e.preventDefault();
+        moveScroll(e.pageX, e.pageY);
+    });
+
+    // ② Android / iPhone 用のタッチ操作登録
+    rightWin.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        startScroll(touch.pageX, touch.pageY);
+    });
+    window.addEventListener('touchend', () => isDown = false);
+    rightWin.addEventListener('touchmove', (e) => {
+        if (isDown) e.preventDefault();
+        const touch = e.touches[0];
+        moveScroll(touch.pageX, touch.pageY);
+    }, { passive: false });
+
+    // キーボードズーム
+    window.addEventListener('keydown', (e) => {
+        if (e.key === ';') zoomImages(0.05);
+        if (e.key === '-') zoomImages(-0.05);
+    });
+</script>
+
+</body>
+</html>
