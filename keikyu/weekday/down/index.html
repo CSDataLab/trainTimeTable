@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>左右連動型 巨大表ビューワー（初期80%版）</title>
+    <meta name="vi版）ewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>KeikyuWeekdayDown</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -56,7 +56,7 @@
     <!-- 上部固定バー -->
     <div class="top-bar">
         <div class="zoom-controls">
-            <span>左右同一 拡大縮小：</span>
+ /*           <span>左右同一 拡大縮小：</span>*/
             <button class="zoom-btn" onclick="zoomImages(-0.05)">－</button>
             <span id="zoomPercent">70%</span> <!-- 初期表示のテキストを80%に変更 -->
             <button class="zoom-btn" onclick="zoomImages(0.05)">＋</button>
@@ -79,7 +79,7 @@
     const imgWidthLeft = 98, imgHeightLeft = 2492;
     const imgWidthRight = 29220, imgHeightRight = 2493;
 
-    // 【重要】初期の拡大率を 1.0 (100%) から 0.8 (80%) に変更
+    // 【重要】初期の拡大率を 1.0 (100%) から 0.7 (70%) に変更
     let currentScale = 0.7; 
     let scrollX = 0, scrollY = 0; 
 
