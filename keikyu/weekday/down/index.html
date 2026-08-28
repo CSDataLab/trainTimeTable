@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="vi版）ewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>KeikyuWeekdayDown</title>
     <style>
         body, html {
@@ -57,7 +57,7 @@
     <div class="top-bar">
         <div class="zoom-controls">
             <button class="zoom-btn" onclick="zoomImages(-0.05)">－</button>
-            <span id="zoomPercent">70%</span> <!-- 初期表示のテキストを80%に変更 -->
+            <span id="zoomPercent">70%</span>
             <button class="zoom-btn" onclick="zoomImages(0.05)">＋</button>
         </div>
     </div>
@@ -74,11 +74,41 @@
     </div>
 
 <script>
+    // ==========================================
+    // 【設定】各時間帯の「画像上の左端ピクセル位置（X座標）」
+    // 画像（WEB_times.png）の実際の時間ごとの開始位置（px）に書き換えてください。
+    // ==========================================
+    const timePositionTable = {
+        4: 0,       // 4時台の開始位置
+        5: 500,     // 5時台の開始位置
+        6: 1500,    // 6時台の開始位置
+        7: 3200,    // 7時台の開始位置
+        8: 5000,    // 8時台の開始位置
+        9: 6800,    // 9時台の開始位置
+        10: 8500,   // 10時台の開始位置
+        11: 10000,  // 11時台の開始位置
+        12: 11500,  // 12時台の開始位置
+        13: 13000,  // 13時台の開始位置
+        14: 14500,  // 14時台の開始位置
+        15: 16000,  // 15時台の開始位置
+        16: 17500,  // 16時台の開始位置
+        17: 19000,  // 17時台の開始位置
+        18: 20500,  // 18時台の開始位置
+        19: 22000,  // 19時台の開始位置
+        20: 23500,  // 20時台の開始位置
+        21: 25000,  // 21時台の開始位置
+        22: 26500,  // 22時台の開始位置
+        23: 28000,  // 23時台の開始位置
+        0: 28500,   // 深夜0時台の開始位置
+        1: 29000,   // 深夜1時台の開始位置
+        2: 29000,   // 深夜2時台の開始位置
+        3: 0        // 始発前は左端（4時）に戻す
+    };
+
     // 画像の元サイズ定義
     const imgWidthLeft = 100, imgHeightLeft = 2493;
     const imgWidthRight = 29281, imgHeightRight = 2493;
 
-    // 【重要】初期の拡大率を 1.0 (100%) から 0.7 (70%) に変更
     let currentScale = 0.7; 
     let scrollX = 0, scrollY = 0; 
 
@@ -98,12 +128,27 @@
         loadedCount++;
         if (loadedCount === 2) {
             resizeCanvases();
-            checkBounds(); // 80%縮小に伴いはみ出しがないか初期チェック
+            // 画像読み込み完了後に現在時刻に応じた初期位置を計算・適用
+            setInitialScrollByTime();
+            checkBounds(); 
             draw();
         }
     }
     imgLeft.onload = onImageLoad;
     imgRight.onload = onImageLoad;
+
+    // 【新設】現在時刻を取得してスクロール初期値を決定する関数
+    function setInitialScrollByTime() {
+        const now = new Date();
+        const currentHour = now.getHours(); // 現在の「時（0〜23）」を取得
+
+        // 表から対応するX座標（ピクセル）を取得。登録がない時間は「0」
+        const targetPixelX = timePositionTable[currentHour] || 0;
+
+        // 【最重要】キャンバスに描画する際は、座標に「拡大率」を掛け算し、
+        // 画面が「左へ動く（＝中身はマイナス方向へズレる）」ため、マイナスにします。
+        scrollX = -(targetPixelX * currentScale);
+    }
 
     // 左画面の横幅を、拡大率に応じた画像サイズ（98px × 拡大率）にリアルタイム連動させる
     function resizeCanvases() {
@@ -136,11 +181,17 @@
     }
 
     function zoomImages(amount) {
+        // 拡大縮小した際に、見ている時間帯の位置が大きくズレないように中心を補正する計算
+        const oldScale = currentScale;
         currentScale += amount;
         if (currentScale < 0.02) currentScale = 0.02;
         if (currentScale > 3.0) currentScale = 3.0;
         document.getElementById('zoomPercent').textContent = `${Math.round(currentScale * 100)}%`;
         
+        // 拡大率の比率に合わせて現在のスクロール位置を追従させる
+        scrollX = (scrollX / oldScale) * currentScale;
+        scrollY = (scrollY / oldScale) * currentScale;
+
         resizeCanvases();
         checkBounds();
         draw();
