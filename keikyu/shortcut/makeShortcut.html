@@ -4,24 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>京急時刻表</title>
-  
-  <!-- ① iOSでStandalone（アプリモード）として動かすための重要タグ -->
+
+  <!-- ① Android Chrome用のWeb App Manifest設定 -->
+  <link rel="manifest" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/manifest.json">
+
+  <!-- ② iOS (Safari) 用設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="京急時刻表">
-
-  <!-- ② アイコン画像指定 -->
   <link rel="apple-touch-icon" sizes="180x180" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
   <link rel="icon" type="image/png" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
 
-  <!-- ③ 自動転送処理（パラメータ判定 + Standalone判定） -->
+  <!-- ③ ショートカット起動時（?app=1 または standalone）のみ即時転送 -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const isFromHomeScreen = urlParams.get('app') === '1' || 
                              window.navigator.standalone || 
                              window.matchMedia('(display-mode: standalone)').matches;
 
-    // ショートカット（?app=1 または Standalone）から開かれた場合のみ転送
     if (isFromHomeScreen) {
       window.location.replace("https://sites.google.com/csdatalab.com/root/keikyutimetable");
     }
@@ -65,15 +65,15 @@
   <img src="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png" class="icon-preview" alt="アイコン">
 
   <h2>ホーム画面に追加してください</h2>
-  
+
   <div class="guide-box">
     ブラウザの<strong>「共有（またはメニュー）」</strong>から<br>
     <strong>「ホーム画面に追加」</strong>を選択してください。
   </div>
 
   <p style="margin-top: 30px;">
-    <a class="btn-jump" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/makeShortcut.html?app=1">
-      転送用のURLで開く
+    <a class="btn-jump" href="https://sites.google.com/csdatalab.com/root/keikyutimetable">
+      追加せずに時刻表を開く ＞
     </a>
   </p>
 
