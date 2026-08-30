@@ -5,16 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>京急時刻表</title>
   
-  <!-- ① ショートカット用アイコン -->
+  <!-- ① iOSでStandalone（アプリモード）として動かすための重要タグ -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="京急時刻表">
+
+  <!-- ② アイコン画像指定 -->
   <link rel="apple-touch-icon" sizes="180x180" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
   <link rel="icon" type="image/png" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
 
-  <!-- ② ホーム画面（アイコン）から起動された時だけ即時転送 -->
+  <!-- ③ 自動転送処理（パラメータ判定 + Standalone判定） -->
   <script>
-    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-    
-    if (isStandalone) {
-      // ホーム画面のアイコンから起動した場合はすぐに時刻表へジャンプ
+    const urlParams = new URLSearchParams(window.location.search);
+    const isFromHomeScreen = urlParams.get('app') === '1' || 
+                             window.navigator.standalone || 
+                             window.matchMedia('(display-mode: standalone)').matches;
+
+    // ショートカット（?app=1 または Standalone）から開かれた場合のみ転送
+    if (isFromHomeScreen) {
       window.location.replace("https://sites.google.com/csdatalab.com/root/keikyutimetable");
     }
   </script>
@@ -64,8 +72,8 @@
   </div>
 
   <p style="margin-top: 30px;">
-    <a class="btn-jump" href="https://sites.google.com/csdatalab.com/root/keikyutimetable">
-      追加せずに時刻表を開く ＞
+    <a class="btn-jump" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/makeShortcut.html?app=1">
+      転送用のURLで開く
     </a>
   </p>
 
