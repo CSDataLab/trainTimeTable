@@ -5,30 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>京急時刻表</title>
   
-  <!-- ① アイコンの指定 -->
+  <!-- ① ショートカット用アイコン -->
   <link rel="apple-touch-icon" sizes="180x180" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
   <link rel="icon" type="image/png" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
 
-  <!-- ② ページが開いたら100ミリ秒（0.1秒）後に自動でGoogleサイトへ転送 -->
+  <!-- ② ホーム画面（アイコン）から起動された時だけ即時転送 -->
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        window.location.replace("https://sites.google.com/csdatalab.com/root/keikyutimetable");
-      }, 100);
-    });
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isStandalone) {
+      // ホーム画面のアイコンから起動した場合はすぐに時刻表へジャンプ
+      window.location.replace("https://sites.google.com/csdatalab.com/root/keikyutimetable");
+    }
   </script>
 
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      padding: 50px 20px;
-      color: #666;
+      padding: 40px 20px;
+      color: #333;
+    }
+    .icon-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      margin-bottom: 15px;
+    }
+    .guide-box {
+      background-color: #f5f5f7;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 20px 0;
+    }
+    .btn-jump {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #0b57d0;
+      color: white;
+      text-decoration: none;
+      border-radius: 20px;
       font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <p>時刻表ページへ移動しています...</p>
+
+  <img src="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png" class="icon-preview" alt="アイコン">
+
+  <h2>ホーム画面に追加してください</h2>
+  
+  <div class="guide-box">
+    ブラウザの<strong>「共有（またはメニュー）」</strong>から<br>
+    <strong>「ホーム画面に追加」</strong>を選択してください。
+  </div>
+
+  <p style="margin-top: 30px;">
+    <a class="btn-jump" href="https://sites.google.com/csdatalab.com/root/keikyutimetable">
+      追加せずに時刻表を開く ＞
+    </a>
+  </p>
+
 </body>
 </html>
