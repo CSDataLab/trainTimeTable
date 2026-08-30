@@ -5,62 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>京急時刻表</title>
   
-  <!-- ① ホーム画面ショートカット用アイコン -->
+  <!-- ① アイコンの指定 -->
   <link rel="apple-touch-icon" sizes="180x180" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
   <link rel="icon" type="image/png" href="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png">
 
-  <!-- ② ホーム画面から起動された時だけ、自動でGoogleサイトへ転送する処理 -->
+  <!-- ② ページが開いたら100ミリ秒（0.1秒）後に自動でGoogleサイトへ転送 -->
   <script>
-    // standalone（ホーム画面のアイコンから起動された状態）かどうかを判定
-    const isHomeScreen = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-
-    if (isHomeScreen) {
-      // ホーム画面からの起動時は瞬時に時刻表ページへジャンプ
-      window.location.replace("https://sites.google.com/csdatalab.com/root/keikyutimetable");
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        window.location.replace("https://sites.google.com/csdatalab.com/root/keikyutimetable");
+      }, 100);
+    });
   </script>
 
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      padding: 40px 20px;
-      color: #333;
-    }
-    .icon-preview {
-      width: 80px;
-      height: 80px;
-      border-radius: 18px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      margin-bottom: 20px;
-    }
-    .guide-box {
-      background-color: #f5f5f7;
-      padding: 15px;
-      border-radius: 10px;
+      padding: 50px 20px;
+      color: #666;
       font-size: 14px;
-      line-height: 1.6;
-      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-
-  <!-- ブラウザから開いた時（追加前）に表示される画面 -->
-  <img src="https://csdatalab.github.io/trainTimeTable/keikyu/shortcut/KeikyuTimeTableIcon.png" class="icon-preview" alt="アイコン">
-
-  <h2>ホーム画面に追加してください</h2>
-  
-  <div class="guide-box">
-    ブラウザの<strong>「共有（またはメニュー）」</strong>ボタンを押し、<br>
-    <strong>「ホーム画面に追加」</strong>を選択してください。
-  </div>
-
-  <p style="margin-top: 30px;">
-    <a href="https://sites.google.com/csdatalab.com/root/keikyutimetable" style="color: #0b57d0; font-size: 14px;">
-      時刻表ページへ進む ＞
-    </a>
-  </p>
-
+  <p>時刻表ページへ移動しています...</p>
 </body>
 </html>
